@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Portal API</title>
+</head>
+<body>
+    <h1>Test Portal API</h1>
+    <input type="text" id="keyword" placeholder="Enter keyword" value="istart">
+    <button onclick="testSearch()">Test Search</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSearch() {
+            const keyword = document.getElementById('keyword').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch(`http://localhost/istart-jaipur-portal/api.php?endpoint=search&q=${encodeURIComponent(keyword)}`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Search Result for "${keyword}":</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

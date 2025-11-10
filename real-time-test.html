@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; gap: 20px; }
+        .panel { flex: 1; border: 1px solid #ccc; padding: 15px; }
+        .keyword { background: #f0f0f0; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .new-keyword { background: #e8f5e8; border-left: 4px solid #4CAF50; }
+        input, button { padding: 8px; margin: 5px; }
+        .status { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Real-time Keyword Test</h1>
+    <p>This page demonstrates the real-time functionality. Open this page and the admin dashboard side by side.</p>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>1. Search for Undefined Keyword</h3>
+            <input type="text" id="search-keyword" placeholder="Enter keyword (e.g., policy)" value="policy">
+            <button onclick="searchKeyword()">Search</button>
+            <div id="search-result"></div>
+        </div>
+        
+        <div class="panel">
+            <h3>2. View Undefined Keywords (Auto-refresh)</h3>
+            <p class="status">Refreshes every 2 seconds</p>
+            <button onclick="getUndefinedKeywords()">Refresh Now</button>
+            <div id="undefined-keywords"></div>
+        </div>
+    </div>
+
+    <script>
+        let undefinedKeywords = [];
+        
+        // Auto-refresh undefined keywords every 2 seconds
+        setInterval(getUndefinedKeywords, 2000);
+        
+        async function searchKeyword() {
+            const keyword = document.getElementById('search-keyword').value;
+            const resultDiv = document.getElementById('search-result');
+            
+            try {
+                const response = await fetch(`http://localhost/istart-jaipur-portal/api.php?endpoint=search&q=${encodeURIComponent(keyword)}`);
+                const data = await response.json();
+                
+                if (data.success && data.results.length > 0) {
+                    resultDiv.innerHTML = `
+                        <div style="color: green;">
+                            <strong>Found ${data.results.length} result(s):</strong><br>
+                            ${data.results.map(r => `${r.keyword}: ${r.answers.join(', ')}`).join('<br>')}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="color: orange;">
+                            <strong>No results found!</strong><br>
+                            Keyword "${keyword}" has been sent to admin dashboard for review.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function getUndefinedKeywords() {
+            try {
+                const response = await fetch('http://localhost:8000/api/undefined-keywords.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const keywordsDiv = document.getElementById('undefined-keywords');
+                    const currentTime = new Date().toLocaleTimeString();
+                    
+                    // Check for new keywords
+                    const newKeywords = data.data.filter(k => 
+                        !undefinedKeywords.find(uk => uk.id === k.id)
+                    );
+                    
+                    undefinedKeywords = data.data;
+                    
+                    let html = `<p class="status">Last updated: ${currentTime}</p>`;
+                    
+                    if (data.data.length === 0) {
+                        html += '<p>No undefined keywords found</p>';
+                    } else {
+                        data.data.forEach(keyword => {
+                            const isNew = newKeywords.find(nk => nk.id === keyword.id);
+                            html += `
+                                <div class="keyword ${isNew ? 'new-keyword' : ''}">
+                                    <strong>${keyword.keyword}</strong>
+                                    ${isNew ? '<span style="color: green;"> (NEW!)</span>' : ''}
+                                    <br>
+                                    <small>Searched ${keyword.frequency} time(s) | Added: ${new Date(keyword.created_at).toLocaleString()}</small>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    keywordsDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error fetching undefined keywords:', error);
+            }
+        }
+        
+        // Initial load
+        getUndefinedKeywords();
+    </script>
+</body>
+</html>

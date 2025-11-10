@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Dashboard API</title>
+</head>
+<body>
+    <h1>Test Admin Dashboard API</h1>
+    
+    <h2>1. Get Undefined Keywords</h2>
+    <button onclick="getUndefinedKeywords()">Get Undefined Keywords</button>
+    <div id="undefined-result"></div>
+    
+    <h2>2. Add Undefined Keyword</h2>
+    <input type="text" id="new-keyword" placeholder="Enter keyword" value="test123">
+    <button onclick="addUndefinedKeyword()">Add Undefined Keyword</button>
+    <div id="add-result"></div>
+    
+    <h2>3. Define Keyword</h2>
+    <input type="text" id="define-keyword" placeholder="Enter keyword" value="test123">
+    <input type="text" id="answer1" placeholder="Answer 1" value="This is answer 1">
+    <input type="text" id="answer2" placeholder="Answer 2" value="This is answer 2">
+    <button onclick="defineKeyword()">Define Keyword</button>
+    <div id="define-result"></div>
+
+    <script>
+        async function getUndefinedKeywords() {
+            const resultDiv = document.getElementById('undefined-result');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/undefined-keywords.php');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Undefined Keywords:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function addUndefinedKeyword() {
+            const keyword = document.getElementById('new-keyword').value;
+            const resultDiv = document.getElementById('add-result');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/undefined-keywords.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'add_undefined',
+                        keyword: keyword
+                    })
+                });
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Add Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function defineKeyword() {
+            const keyword = document.getElementById('define-keyword').value;
+            const answer1 = document.getElementById('answer1').value;
+            const answer2 = document.getElementById('answer2').value;
+            const resultDiv = document.getElementById('define-result');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/undefined-keywords.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'define_keyword',
+                        keyword: keyword,
+                        answers: [answer1, answer2, '', '']
+                    })
+                });
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Define Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
